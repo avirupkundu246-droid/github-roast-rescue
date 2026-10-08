@@ -1,0 +1,195 @@
+/* ============================================================
+   DashboardHeader Styles — Sticky SaaS Product Header
+   ============================================================ */
+
+.dash-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13, 15, 20, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  width: 100%;
+}
+
+.dash-header__inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* ── Brand ── */
+.dash-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+.dash-header__fire {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.dash-header__title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.dash-header__rescue-text {
+  color: var(--green);
+}
+
+/* ── Navigation Tabs ── */
+.dash-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-surface);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.dash-header__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
+.dash-header__nav-btn--active {
+  background: var(--bg-elevated);
+  color: var(--accent-bright);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.dash-header__nav-icon {
+  font-size: 14px;
+}
+
+/* ── Right Actions ── */
+.dash-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.dash-header__user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: var(--border-accent);
+    color: var(--text-primary);
+  }
+}
+
+.dash-header__avatar {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.dash-header__username {
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-header__new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-accent);
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-bright);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.25);
+    border-color: var(--accent-bright);
+    transform: translateY(-1px);
+  }
+
+  span {
+    font-weight: 800;
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .dash-header__inner {
+    flex-wrap: wrap;
+    padding: 10px 16px;
+  }
+
+  .dash-header__nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 3px;
+  }
+
+  .dash-header__nav-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .dash-header__user-chip {
+    display: none;
+  }
+
+  .dash-header__title {
+    font-size: 14px;
+  }
+}

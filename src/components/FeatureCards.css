@@ -1,0 +1,167 @@
+/* ============================================================
+   FeatureCards Styles
+   ============================================================ */
+
+.features-section {
+  padding: 0 24px 80px;
+}
+
+.features-grid {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* ── Card Base ── */
+.feature-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px;
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+}
+
+.feature-card__glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.feature-card:hover .feature-card__glow {
+  opacity: 1;
+}
+
+/* ── Color Variants ── */
+.feature-card--fire {
+  &:hover {
+    border-color: rgba(249, 115, 22, 0.4);
+    box-shadow: 0 8px 32px rgba(249, 115, 22, 0.15), var(--shadow-card);
+  }
+
+  .feature-card__glow {
+    background: radial-gradient(ellipse at top left, rgba(249, 115, 22, 0.08) 0%, transparent 60%);
+  }
+
+  .feature-card__label {
+    color: var(--fire);
+  }
+
+  .feature-card__icon-wrapper {
+    background: rgba(249, 115, 22, 0.12);
+    border-color: rgba(249, 115, 22, 0.25);
+  }
+}
+
+.feature-card--purple {
+  &:hover {
+    border-color: rgba(168, 85, 247, 0.4);
+    box-shadow: 0 8px 32px rgba(168, 85, 247, 0.15), var(--shadow-card);
+  }
+
+  .feature-card__glow {
+    background: radial-gradient(ellipse at top left, rgba(168, 85, 247, 0.08) 0%, transparent 60%);
+  }
+
+  .feature-card__label {
+    color: var(--purple);
+  }
+
+  .feature-card__icon-wrapper {
+    background: rgba(168, 85, 247, 0.12);
+    border-color: rgba(168, 85, 247, 0.25);
+  }
+}
+
+.feature-card--green {
+  &:hover {
+    border-color: rgba(34, 197, 94, 0.4);
+    box-shadow: 0 8px 32px rgba(34, 197, 94, 0.15), var(--shadow-card);
+  }
+
+  .feature-card__glow {
+    background: radial-gradient(ellipse at top left, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+  }
+
+  .feature-card__label {
+    color: var(--green);
+  }
+
+  .feature-card__icon-wrapper {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.25);
+  }
+}
+
+/* ── Card Elements ── */
+.feature-card__icon-wrapper {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.feature-card__emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.feature-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feature-card__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.feature-card__heading {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.feature-card__description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-top: 4px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+  }
+}
+
+@media (max-width: 640px) {
+  .features-section {
+    padding: 0 16px 64px;
+  }
+}

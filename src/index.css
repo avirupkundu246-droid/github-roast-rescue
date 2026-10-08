@@ -1,0 +1,109 @@
+/* ============================================================
+   GitHub Roast & Rescue — Global Design System
+   ============================================================ */
+
+/* ── Design Tokens ── */
+:root {
+  /* Colors */
+  --bg-base:        #0d0f14;
+  --bg-surface:     #13161e;
+  --bg-elevated:    #1a1e2a;
+  --bg-card:        #161b26;
+
+  --border:         rgba(255, 255, 255, 0.07);
+  --border-accent:  rgba(99, 102, 241, 0.4);
+
+  --text-primary:   #f0f2f8;
+  --text-secondary: #8891a8;
+  --text-muted:     #525a70;
+
+  --accent:         #6366f1;       /* Indigo */
+  --accent-bright:  #818cf8;
+  --accent-glow:    rgba(99, 102, 241, 0.25);
+
+  --fire:           #f97316;       /* Orange — for "roast" */
+  --fire-glow:      rgba(249, 115, 22, 0.2);
+  --green:          #22c55e;       /* Green — for "rescue" */
+  --purple:         #a855f7;
+
+  /* Gradients */
+  --gradient-hero:  linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #f97316 100%);
+  --gradient-card:  linear-gradient(145deg, #1a1e2a 0%, #13161e 100%);
+  --gradient-text:  linear-gradient(90deg, #818cf8 0%, #c084fc 50%, #fb923c 100%);
+
+  /* Typography */
+  --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:  'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  /* Spacing */
+  --radius-sm:  6px;
+  --radius-md:  12px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+
+  /* Shadows */
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.5);
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  --shadow-glow: 0 0 40px var(--accent-glow);
+}
+
+/* ── Reset & Base ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  background-color: var(--bg-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Typography ── */
+h1, h2, h3, h4 {
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+p {
+  color: var(--text-secondary);
+}
+
+/* ── Utility Classes ── */
+.gradient-text {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border-width: 0;
+}
