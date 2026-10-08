@@ -109,3 +109,34 @@ p {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* ── Accessibility & Focus Management ── */
+.skip-link {
+  position: fixed;
+  top: -9999px;
+  left: 1rem;
+  z-index: 99999;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 2px solid var(--accent-bright);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+

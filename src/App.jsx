@@ -24,34 +24,39 @@ function App() {
   }
 
   return (
-    <div className={`app ${analysisData ? 'app--dashboard' : 'app--landing'}`}>
-      {analysisData ? (
-        /* ── STATE 2: ANALYSIS DASHBOARD ── */
-        <>
-          <DashboardHeader
-            username={analysisData.user?.username}
-            avatar={analysisData.user?.avatar}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            onNewAnalysis={handleNewAnalysis}
-          />
-          <AnalysisDashboard
-            data={analysisData}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
-          <PageFooter />
-        </>
-      ) : (
-        /* ── STATE 1: LANDING PAGE ── */
-        <>
-          <HeroSection onAnalysisComplete={handleAnalysisComplete} />
-          <SectionDivider label="Roast · Diagnose · Rescue" />
-          <FeatureCards />
-          <PageFooter />
-        </>
-      )}
-    </div>
+    <>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+      <div id="main-content" tabIndex={-1} className={`app ${analysisData ? 'app--dashboard' : 'app--landing'}`}>
+        {analysisData ? (
+          /* ── STATE 2: ANALYSIS DASHBOARD ── */
+          <>
+            <DashboardHeader
+              username={analysisData.user?.username}
+              avatar={analysisData.user?.avatar}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onNewAnalysis={handleNewAnalysis}
+            />
+            <AnalysisDashboard
+              data={analysisData}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+            />
+            <PageFooter />
+          </>
+        ) : (
+          /* ── STATE 1: LANDING PAGE ── */
+          <>
+            <HeroSection onAnalysisComplete={handleAnalysisComplete} />
+            <SectionDivider label="Roast · Diagnose · Rescue" />
+            <FeatureCards />
+            <PageFooter />
+          </>
+        )}
+      </div>
+    </>
   )
 }
 

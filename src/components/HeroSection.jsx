@@ -152,6 +152,9 @@ export default function HeroSection({ onAnalysisComplete }) {
           aria-label="GitHub username input"
         >
           <div className="hero-input-wrapper">
+            <label htmlFor="github-username" className="sr-only">
+              GitHub username
+            </label>
             <span className="hero-input-prefix" aria-hidden="true">
               github.com/
             </span>
@@ -166,6 +169,7 @@ export default function HeroSection({ onAnalysisComplete }) {
               spellCheck={false}
               disabled={isLoading}
               aria-label="GitHub username"
+              aria-describedby={error ? 'hero-error-message' : undefined}
             />
           </div>
           <button
@@ -301,7 +305,7 @@ export default function HeroSection({ onAnalysisComplete }) {
                 {error.type === 'network' && 'Connection Error'}
                 {error.type === 'general' && 'Error Fetching Profile'}
               </span>
-              <p className="hero-state__desc">{error.message}</p>
+              <p className="hero-state__desc" id="hero-error-message">{error.message}</p>
             </div>
           </div>
         )}

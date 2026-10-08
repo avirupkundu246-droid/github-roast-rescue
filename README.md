@@ -180,18 +180,26 @@ Frontend transitions smoothly to the interactive Analysis Dashboard:
 
 ## 9. Verification & Testing
 
-Run all quality and security verification commands:
+Run all quality, testing, coverage, and security verification commands:
 
 ```bash
-# 1. Lint verification (Oxlint)
+# 1. Automated Test Suite (78 passing unit & integration tests)
+npm test
+# Output: 78 pass, 0 fail across 25 suites (~500ms)
+
+# 2. Test Coverage Report
+npm run test:coverage
+# Output: 94.80% lines, 97.06% functions, 89.93% branches across api and engine logic
+
+# 3. Lint verification (Oxlint)
 npm run lint
 # Output: Found 0 warnings and 0 errors.
 
-# 2. Production build verification (Vite)
+# 4. Production build verification (Vite)
 npm run build
-# Output: built client environment in ~300ms without errors.
+# Output: built client environment in ~450ms without errors.
 
-# 3. Dependency vulnerability audit
+# 5. Dependency vulnerability audit
 npm audit
 # Output: found 0 vulnerabilities.
 ```

@@ -19,7 +19,12 @@ const ipRateLimitMap = new Map()
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 30
 
-function getClientIp(req) {
+/**
+ * Extracts and normalizes client IP from x-forwarded-for or socket
+ * @param {import('node:http').IncomingMessage} req
+ * @returns {string}
+ */
+export function getClientIp(req) {
   const forwarded = req.headers?.['x-forwarded-for']
   if (typeof forwarded === 'string') {
     return forwarded.split(',')[0].trim()
@@ -27,7 +32,12 @@ function getClientIp(req) {
   return req.socket?.remoteAddress || '127.0.0.1'
 }
 
-function checkClientRateLimit(req) {
+/**
+ * Checks in-memory sliding-window rate limit per client IP
+ * @param {import('node:http').IncomingMessage} req
+ * @returns {boolean} True if request is allowed, false if rate-limited
+ */
+export function checkClientRateLimit(req) {
   const clientIp = getClientIp(req)
   const now = Date.now()
   const timestamps = ipRateLimitMap.get(clientIp) || []
@@ -52,7 +62,12 @@ function checkClientRateLimit(req) {
   return true
 }
 
-function getAllowedOrigin(req) {
+/**
+ * Determines whether the request origin is safe for CORS reflection
+ * @param {import('node:http').IncomingMessage} req
+ * @returns {string|null} Origin string if permitted, otherwise null
+ */
+export function getAllowedOrigin(req) {
   const origin = req.headers?.origin
   if (!origin || typeof origin !== 'string') return null
   try {
@@ -76,7 +91,12 @@ function getAllowedOrigin(req) {
   return null
 }
 
-function sanitizeExternalUrl(url) {
+/**
+ * Sanitizes external project and website URLs to prevent javascript: or malformed links
+ * @param {string|null} url
+ * @returns {string|null} Safe https:// URL or null
+ */
+export function sanitizeExternalUrl(url) {
   if (!url || typeof url !== 'string') return null
   const trimmed = url.trim()
   if (/^https?:\/\//i.test(trimmed)) {
@@ -158,6 +178,11 @@ export default async function handler(req, res) {
     }
 
     const username = usernameParam.trim()
+    if (!username) {
+      return send(400, {
+        error: 'Username is required. Please provide ?user=username.',
+      })
+    }
 
     // 2. Validate username format (GitHub rules: 1-39 chars, alphanumeric + single hyphens)
     const usernameRegex = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/

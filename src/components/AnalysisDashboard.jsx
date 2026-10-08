@@ -368,7 +368,8 @@ function formatRepoDate(dateString) {
         className="dash-tab-panel"
         id={`dash-panel-${activeTab}`}
         role="tabpanel"
-        aria-label={`${activeTab} view`}
+        aria-labelledby={`tab-${activeTab}`}
+        tabIndex={0}
       >
         {/* ── VIEW 1: OVERVIEW ── */}
         {activeTab === 'overview' && (

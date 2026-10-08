@@ -39,11 +39,16 @@ export default function DashboardHeader({
         </div>
 
         {/* Navigation Tabs */}
-        <nav className="dash-header__nav" aria-label="Dashboard navigation">
+        <nav className="dash-header__nav" role="tablist" aria-label="Dashboard navigation">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
+              role="tab"
+              id={`tab-${tab.id}`}
+              aria-selected={activeTab === tab.id}
+              aria-controls={`dash-panel-${tab.id}`}
+              tabIndex={activeTab === tab.id ? 0 : -1}
               className={`dash-header__nav-btn ${activeTab === tab.id ? 'dash-header__nav-btn--active' : ''}`}
               onClick={() => onTabChange(tab.id)}
             >
