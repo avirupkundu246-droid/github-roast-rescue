@@ -193,25 +193,23 @@ export default function HeroSection({ onAnalysisComplete }) {
           No signup required • Public GitHub data • Evidence-based
         </p>
 
-        {/* Polished analysis assistant loading experience */}
+        {/* Polished developer analysis sequence */}
         {isLoading && (
           <div className="hero-analysis-card" role="status" aria-live="polite">
             <div className="hero-analysis-card__header">
-              <div className="hero-analysis-card__spinner-wrap">
-                <span className="hero-analysis-card__spinner" aria-hidden="true" />
-              </div>
-              <div className="hero-analysis-card__title-box">
+              <div className="hero-analysis-card__header-left">
+                <span className="hero-analysis-card__status-dot" aria-hidden="true" />
                 <span className="hero-analysis-card__target">
                   Analyzing <strong>@{username.trim()}</strong>
                 </span>
-                <span className="hero-analysis-card__step-counter">
-                  Step {analysisStepIndex + 1} of {ANALYSIS_STEPS.length}
-                </span>
               </div>
+              <span className="hero-analysis-card__step-counter">
+                Stage {analysisStepIndex + 1} of {ANALYSIS_STEPS.length}
+              </span>
             </div>
 
-            {/* Current Active Step */}
-            <div className="hero-analysis-card__body">
+            {/* Current Active Stage Focal Area */}
+            <div className="hero-analysis-card__active-stage">
               <div key={analysisStepIndex} className="hero-analysis-card__step">
                 <span className="hero-analysis-card__step-icon" aria-hidden="true">
                   {ANALYSIS_STEPS[analysisStepIndex].icon}
@@ -220,6 +218,7 @@ export default function HeroSection({ onAnalysisComplete }) {
                   {ANALYSIS_STEPS[analysisStepIndex].text}
                 </span>
               </div>
+              <span className="hero-analysis-card__step-spinner" aria-hidden="true" />
             </div>
 
             {/* Step Segments Progress Track */}
@@ -236,6 +235,47 @@ export default function HeroSection({ onAnalysisComplete }) {
                   }`}
                 />
               ))}
+            </div>
+
+            {/* 6-Stage Pipeline Sequence */}
+            <div className="hero-analysis-card__stages-grid" aria-hidden="true">
+              {ANALYSIS_STEPS.map((step, idx) => {
+                const isDone = idx < analysisStepIndex
+                const isActive = idx === analysisStepIndex
+                return (
+                  <div
+                    key={step.text}
+                    className={`hero-analysis-card__stage-item ${
+                      isDone
+                        ? 'hero-analysis-card__stage-item--done'
+                        : isActive
+                        ? 'hero-analysis-card__stage-item--active'
+                        : 'hero-analysis-card__stage-item--pending'
+                    }`}
+                  >
+                    <span className="hero-analysis-card__stage-indicator">
+                      {isDone ? (
+                        <svg
+                          viewBox="0 0 16 16"
+                          width="12"
+                          height="12"
+                          fill="currentColor"
+                          className="hero-analysis-card__check-svg"
+                        >
+                          <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+                        </svg>
+                      ) : isActive ? (
+                        <span className="hero-analysis-card__active-dot" />
+                      ) : (
+                        <span className="hero-analysis-card__pending-dot" />
+                      )}
+                    </span>
+                    <span className="hero-analysis-card__stage-name">
+                      {step.text.replace(/\.\.\.$/, '')}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

@@ -5,6 +5,7 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
   const [selectedFindingIndex, setSelectedFindingIndex] = useState(0)
   const [checkedRescueItems, setCheckedRescueItems] = useState({})
   const [isRecruiterModeActive, setIsRecruiterModeActive] = useState(false)
+  const [expandedCategoryId, setExpandedCategoryId] = useState(null)
   const safeScores = {
     overall: data?.scores?.overall ?? 0,
     profile: data?.scores?.profile ?? 0,
@@ -242,14 +243,18 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
     repositories: data.repositories,
   })
 
-  // Categories for breakdown
+  // Categories for breakdown with real evidence linkage
   const categoryList = [
-    { label: 'Profile', score: safeScores.profile, max: 15, icon: '👤' },
-    { label: 'Projects', score: safeScores.projects, max: 30, icon: '📦' },
-    { label: 'Documentation', score: safeScores.documentation, max: 20, icon: '📝' },
-    { label: 'Activity', score: safeScores.activity, max: 20, icon: '⚡' },
-    { label: 'Recruiter Readiness', score: safeScores.recruiterReadiness, max: 15, icon: '🎯' },
+    { id: 'profile', label: 'Profile', score: safeScores.profile, max: 15, icon: '👤' },
+    { id: 'projects', label: 'Projects', score: safeScores.projects, max: 30, icon: '📦' },
+    { id: 'documentation', label: 'Documentation', score: safeScores.documentation, max: 20, icon: '📝' },
+    { id: 'activity', label: 'Activity', score: safeScores.activity, max: 20, icon: '⚡' },
+    { id: 'recruiterReadiness', label: 'Recruiter Readiness', score: safeScores.recruiterReadiness, max: 15, icon: '🎯' },
   ]
+
+  function handleCategoryClick(categoryId) {
+    setExpandedCategoryId((prev) => (prev === categoryId ? null : categoryId))
+  }
 
 // Language color map for authentic developer analytics visualization
 function getLanguageColor(language) {
@@ -407,23 +412,81 @@ function formatRepoDate(dateString) {
 
             {/* Right Category Breakdown */}
             <div className="dash-breakdown-card">
-              <h3 className="dash-breakdown-title">Score Breakdown</h3>
-              <div className="dash-breakdown-list">
+              <div className="dash-breakdown-header">
+                <h3 className="dash-breakdown-title">Score Breakdown</h3>
+                <span className="dash-breakdown-hint">Click category for evidence</span>
+              </div>
+              <div className="dash-breakdown-list" role="list">
                 {categoryList.map((cat) => {
                   const pct = Math.round((cat.score / cat.max) * 100)
+                  const isOpen = expandedCategoryId === cat.id
+                  const evidence = isOpen
+                    ? getCategoryEvidence(cat.id, {
+                        user,
+                        stats,
+                        repositories: data.repositories,
+                        safeScores,
+                      })
+                    : null
+
                   return (
-                    <div key={cat.label} className="dash-cat-row">
-                      <div className="dash-cat-row__header">
-                        <span className="dash-cat-row__name">
-                          <span aria-hidden="true">{cat.icon}</span> {cat.label}
-                        </span>
-                        <span className="dash-cat-row__val">
-                          <strong>{cat.score}</strong>/{cat.max}
-                        </span>
-                      </div>
-                      <div className="dash-cat-row__track">
-                        <div className="dash-cat-row__fill" style={{ width: `${pct}%` }} />
-                      </div>
+                    <div
+                      key={cat.id}
+                      className={`dash-cat-row ${isOpen ? 'dash-cat-row--open' : ''}`}
+                      role="listitem"
+                    >
+                      <button
+                        type="button"
+                        className={`dash-cat-row__btn ${
+                          isOpen ? 'dash-cat-row__btn--active' : ''
+                        }`}
+                        onClick={() => handleCategoryClick(cat.id)}
+                        aria-expanded={isOpen}
+                        aria-controls={`evidence-panel-${cat.id}`}
+                        id={`cat-btn-${cat.id}`}
+                      >
+                        <div className="dash-cat-row__header">
+                          <span className="dash-cat-row__name">
+                            <span aria-hidden="true">{cat.icon}</span> {cat.label}
+                            <span
+                              className={`dash-cat-row__chevron ${
+                                isOpen ? 'dash-cat-row__chevron--open' : ''
+                              }`}
+                              aria-hidden="true"
+                            >
+                              ▾
+                            </span>
+                          </span>
+                          <span className="dash-cat-row__val">
+                            <strong>{cat.score}</strong>/{cat.max}
+                          </span>
+                        </div>
+                        <div className="dash-cat-row__track">
+                          <div className="dash-cat-row__fill" style={{ width: `${pct}%` }} />
+                        </div>
+                      </button>
+
+                      {isOpen && evidence && (
+                        <div
+                          id={`evidence-panel-${cat.id}`}
+                          role="region"
+                          aria-labelledby={`cat-btn-${cat.id}`}
+                          className="dash-evidence-panel"
+                        >
+                          <div className="dash-evidence-section">
+                            <span className="dash-evidence-label">WHY THIS SCORE</span>
+                            <p className="dash-evidence-text">{evidence.why}</p>
+                          </div>
+                          <div className="dash-evidence-section">
+                            <span className="dash-evidence-label">RECRUITER IMPACT</span>
+                            <p className="dash-evidence-text">{evidence.impact}</p>
+                          </div>
+                          <div className="dash-evidence-section dash-evidence-section--action">
+                            <span className="dash-evidence-label">RECOMMENDED ACTION</span>
+                            <p className="dash-evidence-text">{evidence.action}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -661,28 +724,46 @@ function formatRepoDate(dateString) {
         <div className="dash-view dash-view--rescue">
           <div className="dash-view-header">
             <div className="dash-view-header__left">
-              <span className="dash-view-tag">ACTION CHECKLIST</span>
+              <span className="dash-view-tag">RECRUITER ACTION CHECKLIST</span>
               <h2 className="dash-view-title">Recommended Rescue Plan</h2>
               <p className="dash-view-subtitle">
                 The top 3 highest-impact improvements ranked by recruiter ROI. Check them off as you complete them!
               </p>
             </div>
             <div className="rescue-progress-badge">
+              <div className="rescue-progress-dots" aria-hidden="true">
+                {topRescues.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`rescue-progress-dot ${
+                      checkedRescueItems[i] ? 'rescue-progress-dot--done' : ''
+                    }`}
+                  />
+                ))}
+              </div>
               {completedCount === topRescues.length ? (
-                <span className="rescue-badge--done">✓ All Fixes Done</span>
+                <span className="rescue-badge--done">✓ All 3 Actions Complete</span>
               ) : (
-                <span>{completedCount} of {topRescues.length} completed</span>
+                <span className="rescue-badge--count">
+                  <strong>{completedCount}</strong> of {topRescues.length} completed
+                </span>
               )}
             </div>
           </div>
 
-          <div className="rescue-checklist-container">
+          <div className="rescue-checklist-container" role="list">
             {topRescues.map((item, idx) => {
               const isChecked = Boolean(checkedRescueItems[idx])
+              const rankLabel =
+                idx === 0 ? '#1 Highest Impact' : idx === 1 ? '#2 High Priority' : '#3 Quick Win'
+              const rankClass = idx === 0 ? 'rank--1' : idx === 1 ? 'rank--2' : 'rank--3'
+
               return (
                 <div
                   key={idx}
-                  className={`rescue-check-card ${isChecked ? 'rescue-check-card--checked' : ''}`}
+                  className={`rescue-check-card ${rankClass} ${
+                    isChecked ? 'rescue-check-card--checked' : ''
+                  }`}
                   onClick={() => toggleRescueCheck(idx)}
                   onKeyDown={(e) => {
                     if (e.key === ' ' || e.key === 'Enter') {
@@ -693,14 +774,31 @@ function formatRepoDate(dateString) {
                   role="checkbox"
                   aria-checked={isChecked}
                   tabIndex={0}
+                  aria-label={`${rankLabel}: ${item}. ${isChecked ? 'Completed' : 'Pending'}`}
                 >
                   <div className="rescue-check-card__checkbox" aria-hidden="true">
-                    {isChecked ? '✓' : ''}
+                    {isChecked && (
+                      <svg
+                        viewBox="0 0 16 16"
+                        width="12"
+                        height="12"
+                        fill="currentColor"
+                        className="rescue-check-icon"
+                      >
+                        <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+                      </svg>
+                    )}
                   </div>
                   <div className="rescue-check-card__content">
-                    <div className="rescue-check-card__tags">
-                      <span className={`rescue-rank-pill ${idx === 0 ? 'rank--1' : idx === 1 ? 'rank--2' : 'rank--3'}`}>
-                        {idx === 0 ? '#1 Highest Impact' : idx === 1 ? '#2 High Priority' : '#3 Quick Win'}
+                    <div className="rescue-check-card__meta">
+                      <div className="rescue-check-card__tags">
+                        <span className="rescue-action-num">ACTION 0{idx + 1}</span>
+                        <span className={`rescue-rank-pill ${rankClass}`}>
+                          {rankLabel}
+                        </span>
+                      </div>
+                      <span className={`rescue-status-pill ${isChecked ? 'rescue-status-pill--done' : ''}`}>
+                        {isChecked ? 'RESOLVED' : 'PENDING'}
                       </span>
                     </div>
                     <p className={`rescue-check-card__text ${isChecked ? 'rescue-check-card__text--done' : ''}`}>
@@ -1043,5 +1141,220 @@ function getBiggestRoadblock({ safeScores, user, stats, repositories }) {
     diagnosis: 'Portfolio presentation needs 30-second recruiter optimization.',
     evidence: 'Repositories lack clear live previews or pinned flagship showcases.',
     action: 'Pin your best 2 projects with live demo links and concise descriptions for instant recruiter evaluation.',
+  }
+}
+
+/**
+ * Explains each score category using strictly real GitHub analysis data.
+ * Returns { why, impact, action }.
+ * If sufficient data is not available, returns honest fallback message.
+ */
+function getCategoryEvidence(catId, { user, stats, repositories, safeScores: _safeScores }) {
+  if (!user && !stats && !repositories) {
+    return {
+      why: 'Detailed evidence is not available for this category.',
+      impact: 'Recruiter evaluation relies on observable repository and profile signals.',
+      action: 'Review this section for opportunities to polish public engineering evidence.',
+    }
+  }
+
+  const repos = Array.isArray(repositories) ? repositories : []
+  const totalRepos = user?.publicRepoCount ?? repos.length
+  const nonForkCount = stats?.nonForkRepoCount ?? repos.filter((r) => !r.isFork).length
+  const reposWithDesc = repos.filter((r) => Boolean(r.description && r.description.trim())).length
+  const undescribedCount = Math.max(0, totalRepos - reposWithDesc)
+  const reposWithDemo = repos.filter((r) => Boolean(r.homepage && r.homepage.trim())).length
+  const daysSinceLastPush = stats?.daysSinceLastPush ?? null
+
+  switch (catId) {
+    case 'profile': {
+      const hasBio = Boolean(user?.bio && user.bio.trim().length > 0)
+      const hasReadme = Boolean(user?.hasProfileReadme)
+      const hasBlog = Boolean(user?.blog && user.blog.trim().length > 0)
+
+      if (hasBio && hasReadme && hasBlog) {
+        return {
+          why: `Developer bio is set, profile README is active, and portfolio link (${user.blog}) is configured.`,
+          impact: 'Gives recruiters immediate context on your seniority, specialty, and where to inspect your best work.',
+          action: 'Keep your profile README current with your latest achievements and contact information.',
+        }
+      }
+      if (!hasReadme && !hasBio) {
+        return {
+          why: 'Profile lacks both a custom profile README and a developer bio.',
+          impact: 'Recruiters spend under 30 seconds scanning profile headers before deciding whether to inspect repositories.',
+          action: 'Create a username-matching repository to enable a profile README and write a 1-sentence bio.',
+        }
+      }
+      if (!hasReadme) {
+        return {
+          why: `Bio is configured${hasBlog ? ' with portfolio link' : ''}, but no custom profile README was detected.`,
+          impact: 'A profile README is the highest-converting space on GitHub to showcase your 2 strongest projects.',
+          action: `Create a repository named "${user?.username || 'your-username'}" with a README detailing your tech stack.`,
+        }
+      }
+      if (!hasBio) {
+        return {
+          why: 'Profile README is active, but your short bio field is blank.',
+          impact: 'The bio is the primary plain text visible in search results and social previews.',
+          action: 'Add a concise bio stating your primary specialization and preferred tech stack.',
+        }
+      }
+      if (!hasBlog) {
+        return {
+          why: 'Bio and profile README are active, but no external portfolio or personal website link is attached.',
+          impact: 'Reviewers who want to view live projects or an external resume have no direct link.',
+          action: 'Add your portfolio, LinkedIn, or personal website URL to your GitHub profile settings.',
+        }
+      }
+      return {
+        why: 'Profile header contains foundational developer metadata.',
+        impact: 'Establishes clear developer identity during technical recruiter evaluations.',
+        action: 'Refine your bio and README for concise, high-signal presentation.',
+      }
+    }
+
+    case 'projects': {
+      const totalStars = stats?.totalStars ?? 0
+      const totalForks = stats?.totalForks ?? 0
+      const mostStarred = stats?.mostStarredRepo
+
+      if (totalRepos === 0) {
+        return {
+          why: '0 public repositories found under this account.',
+          impact: 'Technical recruiters cannot evaluate your coding capabilities without public code samples.',
+          action: 'Publish at least one well-architected project with modular code and clean commit history.',
+        }
+      }
+      if (nonForkCount === 0) {
+        return {
+          why: `All ${totalRepos} public ${totalRepos === 1 ? 'repository is a fork' : 'repositories are forks'} of other codebases.`,
+          impact: 'Forking shows curiosity, but engineering hiring requires proof of authored code.',
+          action: 'Publish an original project built from scratch to showcase your software architecture skills.',
+        }
+      }
+      if (nonForkCount < 3) {
+        return {
+          why: `Only ${nonForkCount} original ${nonForkCount === 1 ? 'repository' : 'repositories'} found among ${totalRepos} public projects.`,
+          impact: 'Reviewers look for 2–3 substantive original codebases to verify technical consistency.',
+          action: 'Build and ship another standalone project highlighting your primary language or framework.',
+        }
+      }
+      if (totalStars === 0) {
+        return {
+          why: `${nonForkCount} original ${nonForkCount === 1 ? 'repository' : 'repositories'} authored, but with 0 stars across all projects.`,
+          impact: 'Stars and forks provide social proof that your software has real-world utility or developer interest.',
+          action: 'Enhance project READMEs with visual previews and clear documentation to attract developer interest.',
+        }
+      }
+      return {
+        why: `${nonForkCount} original ${nonForkCount === 1 ? 'repository' : 'repositories'} authored with ${totalStars} total ${totalStars === 1 ? 'star' : 'stars'} and ${totalForks} ${totalForks === 1 ? 'fork' : 'forks'}.`,
+        impact: 'Demonstrates verified project creation and external traction from the developer community.',
+        action: `Pin your two highest-traction repositories${mostStarred ? ` (such as ${mostStarred.name})` : ''} to the top of your profile.`,
+      }
+    }
+
+    case 'documentation': {
+      if (totalRepos === 0) {
+        return {
+          why: 'No repositories available to evaluate documentation.',
+          impact: 'Documentation is a critical signal of how well an engineer communicates with team members.',
+          action: 'Publish a project featuring a comprehensive README with setup, architecture, and usage guides.',
+        }
+      }
+      if (undescribedCount > 0) {
+        return {
+          why: `${undescribedCount} of ${totalRepos} public ${totalRepos === 1 ? 'repository has' : 'repositories have'} no description.`,
+          impact: 'Repositories without descriptions are routinely skipped by reviewers during 30-second scans.',
+          action: 'Add concise 1-sentence descriptions in the About section of your top repositories.',
+        }
+      }
+      return {
+        why: `All ${totalRepos} public repositories have descriptions configured${user?.hasProfileReadme ? ' and a profile README is active' : ''}.`,
+        impact: 'Clear descriptions let technical screeners immediately understand project scope and relevance.',
+        action: 'Ensure each repository README includes architecture diagrams, setup commands, and demo GIFs.',
+      }
+    }
+
+    case 'activity': {
+      if (daysSinceLastPush === null) {
+        return {
+          why: 'No recent public push or commit timestamps recorded.',
+          impact: 'Recruiters check recent commit cadence to confirm active coding engagement.',
+          action: 'Push incremental commits to your public repositories to establish observable activity.',
+        }
+      }
+      if (daysSinceLastPush === 0) {
+        return {
+          why: 'Code pushed to public repositories today, reflecting active ongoing development.',
+          impact: 'Immediate proof of an active engineer consistently writing and shipping code.',
+          action: 'Maintain regular commit momentum with descriptive conventional commit messages.',
+        }
+      }
+      if (daysSinceLastPush <= 7) {
+        return {
+          why: `Last public push was ${daysSinceLastPush} ${daysSinceLastPush === 1 ? 'day' : 'days'} ago.`,
+          impact: 'Demonstrates steady, weekly coding momentum that satisfies recruiter activity checks.',
+          action: 'Keep committing incremental iterations and code refactors on your active branch.',
+        }
+      }
+      if (daysSinceLastPush <= 30) {
+        const weeks = Math.round(daysSinceLastPush / 7)
+        return {
+          why: `Last public push was ${daysSinceLastPush} days ago (~${weeks} ${weeks === 1 ? 'week' : 'weeks'} without public activity).`,
+          impact: 'Recruiters may question whether your primary work is paused or entirely in private repos.',
+          action: 'Ship an update or documentation improvement to your flagship project this week.',
+        }
+      }
+      const months = Math.round(daysSinceLastPush / 30)
+      return {
+        why: `No public commits recorded in the past ${daysSinceLastPush} days (~${months} ${months === 1 ? 'month' : 'months'}).`,
+        impact: 'Multi-month gaps in public activity create the perception of rusty technical skills.',
+        action: 'Push a fresh update, bug fix, or refactor to your top repository to revive your contribution timeline.',
+      }
+    }
+
+    case 'recruiterReadiness': {
+      if (reposWithDemo === 0 && !user?.blog) {
+        return {
+          why: `0 live demo links found across ${totalRepos} repositories and no portfolio URL in profile.`,
+          impact: 'Reviewers cannot test your software without cloning and compiling locally, causing drop-off.',
+          action: 'Deploy your best project (via Vercel, Netlify, or Pages) and add the URL in the repo About section.',
+        }
+      }
+      if (reposWithDemo > 0 && undescribedCount > 0) {
+        return {
+          why: `${reposWithDemo} ${reposWithDemo === 1 ? 'project has a live demo link' : 'projects have live demo links'}, but ${undescribedCount} of ${totalRepos} repos lack descriptions.`,
+          impact: 'Live demos are high-converting, but missing descriptions prevent recruiters from finding them.',
+          action: 'Add concise descriptions and pin the repositories that have live demo links.',
+        }
+      }
+      if (reposWithDemo > 0 && undescribedCount === 0) {
+        return {
+          why: `${reposWithDemo} ${reposWithDemo === 1 ? 'project features' : 'projects feature'} live demos, all repos are described, and technical focus is clear.`,
+          impact: 'Optimal 30-second recruiter usability: reviewers can immediately test and evaluate your work.',
+          action: 'Pin your top 2 demoed projects with clear badges in the README for maximum conversion.',
+        }
+      }
+      if (user?.blog && reposWithDemo === 0) {
+        return {
+          why: `Portfolio link provided (${user.blog}), but 0 repository live demo URLs detected across ${totalRepos} repositories.`,
+          impact: 'Reviewers can visit your personal site, but cannot test individual codebases directly on GitHub.',
+          action: 'Add direct deployment preview URLs to the GitHub About panel of your best repositories.',
+        }
+      }
+      return {
+        why: 'Profile exhibits baseline recruiter readiness indicators.',
+        impact: 'Facilitates rapid initial screening by technical hiring managers.',
+        action: 'Pin your two strongest repositories with live demo links and clear descriptions.',
+      }
+    }
+
+    default:
+      return {
+        why: 'Detailed evidence is not available for this category.',
+        impact: 'Recruiter evaluation relies on observable repository and profile signals.',
+        action: 'Review this section for opportunities to polish public engineering evidence.',
+      }
   }
 }
