@@ -123,7 +123,7 @@ export default function HeroSection({ onAnalysisComplete }) {
         {/* Badge */}
         <div className="hero-badge">
           <span className="hero-badge__dot" aria-hidden="true" />
-          Free · No sign-in required · Public profiles only
+          Public GitHub Profile Analysis
         </div>
 
         {/* Heading */}
@@ -134,11 +134,16 @@ export default function HeroSection({ onAnalysisComplete }) {
           <span className="hero-title__rescue">Rescue</span>
         </h1>
 
-        {/* Tagline */}
-        <p className="hero-tagline">
-          Your GitHub profile is a developer's first impression.{' '}
-          <strong>We'll tell you exactly what's broken — and how to fix it.</strong>
-        </p>
+        {/* Story & Value Proposition */}
+        <div className="hero-copy-group">
+          <p className="hero-hook">
+            Your GitHub has a story.
+            <span className="hero-hook__sub">Let&apos;s see what a recruiter actually sees.</span>
+          </p>
+          <p className="hero-subtext">
+            Analyze your public GitHub profile. Get an evidence-based score, recruiter verdict, brutally honest findings, and a plan to fix what&apos;s holding you back.
+          </p>
+        </div>
 
         {/* Input form */}
         <form
@@ -176,16 +181,16 @@ export default function HeroSection({ onAnalysisComplete }) {
               </>
             ) : (
               <>
-                <span className="hero-cta__icon" aria-hidden="true">🔥</span>
-                Roast My GitHub
+                <span className="hero-cta__icon" aria-hidden="true">⚡</span>
+                Analyze My GitHub
               </>
             )}
           </button>
         </form>
 
-        {/* Hint text */}
+        {/* Trust Badges */}
         <p className="hero-hint">
-          See what a recruiter notices in 30 seconds — then find out exactly what to fix.
+          No signup required • Public GitHub data • Evidence-based
         </p>
 
         {/* Polished analysis assistant loading experience */}

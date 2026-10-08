@@ -72,7 +72,7 @@
   padding: 6px 14px;
   border-radius: var(--radius-sm);
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 600;
@@ -88,8 +88,9 @@
 
 .dash-header__nav-btn--active {
   background: var(--bg-elevated);
-  color: var(--accent-bright);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .dash-header__nav-icon {
@@ -116,10 +117,10 @@
   color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 12px;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 
   &:hover {
-    border-color: var(--border-accent);
+    border-color: rgba(255, 255, 255, 0.2);
     color: var(--text-primary);
   }
 }
@@ -140,26 +141,26 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-accent);
-  background: rgba(99, 102, 241, 0.12);
-  color: var(--accent-bright);
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--bg-card);
+  color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   white-space: nowrap;
 
   &:hover {
-    background: rgba(99, 102, 241, 0.25);
-    border-color: var(--accent-bright);
-    transform: translateY(-1px);
+    background: var(--bg-elevated);
+    border-color: rgba(255, 255, 255, 0.22);
   }
 
   span {
-    font-weight: 800;
+    font-weight: 700;
+    color: var(--text-muted);
   }
 }
 

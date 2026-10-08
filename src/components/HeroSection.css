@@ -92,17 +92,34 @@
   color: var(--green);
 }
 
-/* ── Tagline ── */
-.hero-tagline {
-  font-size: clamp(16px, 2vw, 19px);
-  color: var(--text-secondary);
-  line-height: 1.65;
-  max-width: 580px;
+/* ── Story & Value Proposition ── */
+.hero-copy-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 620px;
 }
 
-.hero-tagline strong {
+.hero-hook {
+  font-size: clamp(20px, 2.5vw, 25px);
+  font-weight: 700;
   color: var(--text-primary);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.hero-hook__sub {
+  display: block;
+  color: var(--accent-bright);
   font-weight: 600;
+  font-size: clamp(17px, 2.2vw, 21px);
+  margin-top: 4px;
+}
+
+.hero-subtext {
+  font-size: clamp(14px, 1.8vw, 16px);
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 /* ── Input Form ── */

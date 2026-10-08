@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './AnalysisDashboard.css'
 
 export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
@@ -83,6 +83,29 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
       }
     }
   }, [data, safeScores.overall, isReducedMotionPreferred])
+
+  // Keep tab-switch scroll position stable:
+  // If user scrolled deeply below the tab content area, smoothly align to the tab panel top.
+  // If already at or above the tab content, do not scroll at all to prevent any jump.
+  const prevTabRef = useRef(activeTab)
+  const tabPanelRef = useRef(null)
+
+  useEffect(() => {
+    if (prevTabRef.current !== activeTab) {
+      prevTabRef.current = activeTab
+      if (tabPanelRef.current) {
+        const rect = tabPanelRef.current.getBoundingClientRect()
+        // If the top of the tab panel is scrolled off-screen above the viewport (rect.top < 60)
+        if (rect.top < 60) {
+          const targetY = window.scrollY + rect.top - 70 // 70px offset for sticky header
+          window.scrollTo({
+            top: Math.max(0, targetY),
+            behavior: isReducedMotionPreferred ? 'auto' : 'smooth',
+          })
+        }
+      }
+    }
+  }, [activeTab, isReducedMotionPreferred])
 
   if (!data || !data.user) return null
 
@@ -228,6 +251,39 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
     { label: 'Recruiter Readiness', score: safeScores.recruiterReadiness, max: 15, icon: '🎯' },
   ]
 
+// Language color map for authentic developer analytics visualization
+function getLanguageColor(language) {
+  const map = {
+    JavaScript: '#f1e05a',
+    TypeScript: '#3178c6',
+    Python: '#3572a5',
+    Go: '#00add8',
+    Rust: '#dea584',
+    HTML: '#e34c26',
+    CSS: '#563d7c',
+    Ruby: '#701516',
+    Java: '#b07219',
+    'C++': '#f34b7d',
+    C: '#555555',
+    'C#': '#178600',
+    PHP: '#4f5d95',
+    Swift: '#f05138',
+    Kotlin: '#a97bff',
+    Dart: '#00b4ab',
+    Shell: '#89e051',
+    Vue: '#41b883',
+  }
+  return map[language] || '#818cf8'
+}
+
+// Formats repository activity date pure and consistent with GitHub repository listings
+function formatRepoDate(dateString) {
+  if (!dateString) return null
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return null
+  return `Updated ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+}
+
   return (
     <main className="dash-container" aria-label="Analysis Dashboard">
       {/* ── Compact Profile Bar ── */}
@@ -237,8 +293,8 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
             src={user.avatar}
             alt={`${user.username}'s avatar`}
             className="dash-profile-bar__avatar"
-            width="54"
-            height="54"
+            width="52"
+            height="52"
           />
           <div className="dash-profile-bar__info">
             <div className="dash-profile-bar__name-row">
@@ -250,18 +306,38 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
                 className="dash-profile-bar__handle"
                 title="View on GitHub"
               >
-                @{user.username} ↗
+                @{user.username} <span aria-hidden="true" className="dash-profile-bar__external">↗</span>
               </a>
             </div>
             {user.bio && <p className="dash-profile-bar__bio">{user.bio}</p>}
+            {stats?.languages && stats.languages.length > 0 && (
+              <div className="dash-profile-bar__tech-stack" aria-label="Detected technologies">
+                {stats.languages.slice(0, 4).map((lang) => (
+                  <span key={lang} className="dash-tech-pill">
+                    <span
+                      className="dash-tech-pill__dot"
+                      style={{ backgroundColor: getLanguageColor(lang) }}
+                      aria-hidden="true"
+                    />
+                    {lang}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         <div className="dash-profile-bar__chips">
           <div className="dash-stat-chip">
             <span className="dash-stat-chip__num">{user.publicRepoCount}</span>
-            <span className="dash-stat-chip__label">Repos</span>
+            <span className="dash-stat-chip__label">Public Repos</span>
           </div>
+          {stats?.nonForkRepoCount !== undefined && (
+            <div className="dash-stat-chip">
+              <span className="dash-stat-chip__num">{stats.nonForkRepoCount}</span>
+              <span className="dash-stat-chip__label">Original</span>
+            </div>
+          )}
           <div className="dash-stat-chip">
             <span className="dash-stat-chip__num">{user.followers.toLocaleString()}</span>
             <span className="dash-stat-chip__label">Followers</span>
@@ -270,11 +346,27 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
             <span className="dash-stat-chip__num">{stats?.totalStars?.toLocaleString() || 0}</span>
             <span className="dash-stat-chip__label">Stars</span>
           </div>
+          {daysSinceLastPush !== null && (
+            <div className="dash-stat-chip">
+              <span className="dash-stat-chip__num">
+                {daysSinceLastPush === 0 ? 'Today' : `${daysSinceLastPush}d`}
+              </span>
+              <span className="dash-stat-chip__label">Last Push</span>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* ── VIEW 1: OVERVIEW ── */}
-      {activeTab === 'overview' && (
+      {/* ── TAB CONTENT PANEL ── */}
+      <div
+        ref={tabPanelRef}
+        className="dash-tab-panel"
+        id={`dash-panel-${activeTab}`}
+        role="tabpanel"
+        aria-label={`${activeTab} view`}
+      >
+        {/* ── VIEW 1: OVERVIEW ── */}
+        {activeTab === 'overview' && (
         <div className="dash-view dash-view--overview">
           {/* Main Hero Score Grid */}
           <div className="dash-score-hero">
@@ -342,8 +434,10 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
           {/* ── BIGGEST RECRUITER ROADBLOCK ── */}
           <section className="dash-roadblock-card" aria-label="Biggest Recruiter Roadblock">
             <div className="dash-roadblock-card__header">
-              <span className="dash-roadblock-card__badge" aria-hidden="true">⚠️</span>
-              <h3 className="dash-roadblock-card__title">BIGGEST RECRUITER ROADBLOCK</h3>
+              <div className="dash-roadblock-card__badge-group">
+                <span className="dash-roadblock-card__pill">High Impact</span>
+                <h3 className="dash-roadblock-card__title">Biggest Recruiter Roadblock</h3>
+              </div>
               <span className="dash-roadblock-card__cat">
                 Impact Area: <strong>{roadblock.category}</strong>
               </span>
@@ -354,7 +448,10 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
             )}
             <div className="dash-roadblock-card__action">
               <span className="dash-roadblock-card__action-arrow" aria-hidden="true">→</span>
-              <span className="dash-roadblock-card__action-text">{roadblock.action}</span>
+              <div className="dash-roadblock-card__action-text-wrap">
+                <span className="dash-roadblock-card__action-tag">Recommended Action</span>
+                <span className="dash-roadblock-card__action-text">{roadblock.action}</span>
+              </div>
             </div>
           </section>
 
@@ -414,9 +511,7 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
           <div className="dash-view-header">
             <div className="dash-view-header__left">
               <span className="dash-view-tag">30-SECOND AUDIT</span>
-              <h2 className="dash-view-title">
-                What a Recruiter Sees in <span className="gradient-text">30 Seconds</span>
-              </h2>
+              <h2 className="dash-view-title">30-Second Recruiter Evaluation</h2>
               <p className="dash-view-subtitle">
                 Factual evaluation synthesized purely from your public profile and repositories.
               </p>
@@ -435,7 +530,7 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
             {/* 🟢 Strong Signals */}
             <div className="recruiter-audit-card recruiter-audit-card--strong">
               <div className="recruiter-audit-card__header">
-                <span className="recruiter-signal-dot recruiter-signal-dot--green" aria-hidden="true">🟢</span>
+                <span className="recruiter-signal-dot recruiter-signal-dot--green" aria-hidden="true">●</span>
                 <h3 className="recruiter-audit-card__title">Strong Signals</h3>
               </div>
               <ul className="recruiter-audit-list">
@@ -451,7 +546,7 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
             {/* 🔴 Red Flags */}
             <div className="recruiter-audit-card recruiter-audit-card--weak">
               <div className="recruiter-audit-card__header">
-                <span className="recruiter-signal-dot recruiter-signal-dot--red" aria-hidden="true">🔴</span>
+                <span className="recruiter-signal-dot recruiter-signal-dot--red" aria-hidden="true">●</span>
                 <h3 className="recruiter-audit-card__title">Red Flags</h3>
               </div>
               <ul className="recruiter-audit-list">
@@ -473,7 +568,7 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
               <p className="recruiter-verdict-summary">{recruiterVerdict}</p>
 
               <div className="recruiter-first-action">
-                <span className="recruiter-first-action__label">PRIMARY ROADBLOCK TO FIX:</span>
+                <span className="recruiter-first-action__label">Primary Roadblock to Fix</span>
                 <p className="recruiter-first-action__text">{roadblock.action}</p>
               </div>
             </div>
@@ -486,9 +581,9 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
         <div className="dash-view dash-view--roast">
           <div className="dash-view-header">
             <div className="dash-view-header__left">
-              <span className="dash-view-tag">INTERACTIVE NAVIGATOR</span>
+              <span className="dash-view-tag">FINDINGS AUDIT</span>
               <h2 className="dash-view-title">
-                🔥 Roast Navigator — <span className="gradient-text">{findingCount} Findings</span>
+                Roast &amp; Diagnosis Navigator <span className="dash-view-title__count">({findingCount})</span>
               </h2>
               <p className="dash-view-subtitle">
                 Select a finding below to inspect the honest roast, root cause diagnosis, and rescue fix.
@@ -507,7 +602,7 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
                 className={`finding-pill-btn ${selectedFindingIndex === idx ? 'finding-pill-btn--active' : ''}`}
                 onClick={() => setSelectedFindingIndex(idx)}
               >
-                [{String(idx + 1).padStart(2, '0')}]
+                {String(idx + 1).padStart(2, '0')}
               </button>
             ))}
           </div>
@@ -515,7 +610,7 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
           {/* Interactive Single Finding Card */}
           <div className="finding-display-card">
             <div className="finding-display-card__header">
-              <span className="finding-display-card__index">Finding #{selectedFindingIndex + 1} of {findingCount}</span>
+              <span className="finding-display-card__index">Finding {selectedFindingIndex + 1} of {findingCount}</span>
               <div className="finding-display-card__controls">
                 <button
                   type="button"
@@ -539,21 +634,21 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
             </div>
 
             <div className="finding-stages-vertical">
-              {/* 🔥 ROAST */}
+              {/* Roast */}
               <div className="finding-stage-box finding-stage-box--roast">
-                <span className="finding-stage-box__label">🔥 ROAST</span>
+                <span className="finding-stage-box__label">Roast</span>
                 <p className="finding-stage-box__quote">&ldquo;{currentFinding.roast}&rdquo;</p>
               </div>
 
-              {/* 🔍 DIAGNOSE */}
+              {/* Diagnosis */}
               <div className="finding-stage-box finding-stage-box--diagnose">
-                <span className="finding-stage-box__label">🔍 DIAGNOSE</span>
+                <span className="finding-stage-box__label">Diagnosis</span>
                 <p className="finding-stage-box__body">{currentFinding.diagnose}</p>
               </div>
 
-              {/* 🛠️ RESCUE */}
+              {/* Recommendation */}
               <div className="finding-stage-box finding-stage-box--rescue">
-                <span className="finding-stage-box__label">🛠️ RESCUE</span>
+                <span className="finding-stage-box__label">Recommended Fix</span>
                 <p className="finding-stage-box__body">{currentFinding.rescue}</p>
               </div>
             </div>
@@ -567,16 +662,14 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
           <div className="dash-view-header">
             <div className="dash-view-header__left">
               <span className="dash-view-tag">ACTION CHECKLIST</span>
-              <h2 className="dash-view-title">
-                Your <span className="gradient-text">Rescue Plan</span>
-              </h2>
+              <h2 className="dash-view-title">Recommended Rescue Plan</h2>
               <p className="dash-view-subtitle">
                 The top 3 highest-impact improvements ranked by recruiter ROI. Check them off as you complete them!
               </p>
             </div>
             <div className="rescue-progress-badge">
               {completedCount === topRescues.length ? (
-                <span className="rescue-badge--done">🎉 All Fixes Done!</span>
+                <span className="rescue-badge--done">✓ All Fixes Done</span>
               ) : (
                 <span>{completedCount} of {topRescues.length} completed</span>
               )}
@@ -627,47 +720,75 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
           <div className="dash-view-header">
             <div className="dash-view-header__left">
               <span className="dash-view-tag">CODE AUDIT</span>
-              <h2 className="dash-view-title">
-                Top <span className="gradient-text">Repositories</span>
-              </h2>
+              <h2 className="dash-view-title">Repository Portfolio Analysis</h2>
               <p className="dash-view-subtitle">
-                Showing top public repositories ranked by stars and push recency.
+                Showing top public repositories ranked by stars, authorship, and push recency.
               </p>
             </div>
-            <span className="dash-repos-count">{user.publicRepoCount} total public repos</span>
+            <span className="dash-repos-count">{user.publicRepoCount} total public repositories</span>
           </div>
 
           <div className="dash-repos-grid">
             {(topRepositories || []).map((repo) => (
               <article key={repo.name} className="dash-repo-card">
-                <div className="dash-repo-card__header">
-                  <a
-                    href={repo.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="dash-repo-card__name"
-                  >
-                    {repo.name} <span aria-hidden="true">↗</span>
-                  </a>
-                  {repo.isFork && <span className="dash-repo-card__fork-pill">Fork</span>}
+                <div className="dash-repo-card__top">
+                  <div className="dash-repo-card__header">
+                    <a
+                      href={repo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="dash-repo-card__name"
+                    >
+                      {repo.name} <span aria-hidden="true" className="dash-repo-card__external">↗</span>
+                    </a>
+                    <div className="dash-repo-card__badges">
+                      {repo.isFork && <span className="dash-repo-card__fork-pill">Fork</span>}
+                      {repo.archived && <span className="dash-repo-card__archived-pill">Archived</span>}
+                    </div>
+                  </div>
+
+                  <p className="dash-repo-card__desc">
+                    {repo.description || <span className="dash-repo-card__desc-empty">No description provided.</span>}
+                  </p>
                 </div>
 
-                <p className="dash-repo-card__desc">
-                  {repo.description || 'No description provided.'}
-                </p>
-
                 <div className="dash-repo-card__footer">
-                  {repo.language ? (
-                    <span className="dash-repo-card__lang">
-                      <span className="dash-repo-card__lang-dot" aria-hidden="true" />
-                      {repo.language}
-                    </span>
-                  ) : (
-                    <span className="dash-repo-card__lang-none">No language specified</span>
-                  )}
-                  <div className="dash-repo-card__metrics">
-                    <span title="Stars">⭐ {repo.stars}</span>
-                    <span title="Forks">🍴 {repo.forks}</span>
+                  <div className="dash-repo-card__meta-left">
+                    {repo.language ? (
+                      <span className="dash-repo-card__lang">
+                        <span
+                          className="dash-repo-card__lang-dot"
+                          style={{ backgroundColor: getLanguageColor(repo.language) }}
+                          aria-hidden="true"
+                        />
+                        {repo.language}
+                      </span>
+                    ) : (
+                      <span className="dash-repo-card__lang-none">Plain</span>
+                    )}
+                    {repo.pushedAt && (
+                      <span className="dash-repo-card__activity">
+                        {formatRepoDate(repo.pushedAt)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="dash-repo-card__meta-right">
+                    {repo.homepage && (
+                      <a
+                        href={repo.homepage}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="dash-repo-card__demo-link"
+                        title="View live demo or homepage"
+                      >
+                        Demo ↗
+                      </a>
+                    )}
+                    <div className="dash-repo-card__metrics">
+                      <span title="Stars" className="dash-repo-card__metric">★ {repo.stars.toLocaleString()}</span>
+                      <span title="Forks" className="dash-repo-card__metric">⑂ {repo.forks.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
               </article>
@@ -675,6 +796,7 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
           </div>
         </div>
       )}
+      </div>
     </main>
   )
 }
