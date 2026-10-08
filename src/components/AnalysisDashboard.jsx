@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './AnalysisDashboard.css'
+import { getRecruiterSimulationData } from '../utils/recruiterSimulation.js'
 
 export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
   const [selectedFindingIndex, setSelectedFindingIndex] = useState(0)
@@ -111,6 +112,7 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
   if (!data || !data.user) return null
 
   const { user, stats, topRepositories, findings } = data
+  const daysSinceLastPush = stats?.daysSinceLastPush ?? null
 
   // Score label from prompt examples
   function getScoreBadge(score) {
@@ -167,62 +169,6 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
 
   const completedCount = topRescues.filter((_, idx) => checkedRescueItems[idx]).length
 
-  // Recruiter Checklist derived from real data
-  const reposWithDesc = (data.repositories || []).filter(
-    (r) => typeof r.description === 'string' && r.description.trim().length > 0
-  )
-  const undescribedCount = (user.publicRepoCount || 0) - reposWithDesc.length
-  const daysSinceLastPush = stats?.daysSinceLastPush ?? null
-
-  const strongSignals = []
-  if (stats?.totalStars && stats.totalStars > 0) {
-    strongSignals.push(`${stats.totalStars.toLocaleString()} total stars across public repositories`)
-  }
-  if (daysSinceLastPush !== null && daysSinceLastPush <= 30) {
-    strongSignals.push(`Recent active momentum (${daysSinceLastPush === 0 ? 'today' : `${daysSinceLastPush} days ago`})`)
-  }
-  if (stats?.nonForkRepoCount && stats.nonForkRepoCount >= 2) {
-    strongSignals.push(`${stats.nonForkRepoCount} original repositories built from scratch`)
-  }
-  if (user.bio && user.bio.trim().length >= 15) {
-    strongSignals.push('Bio provides immediate context on engineering focus')
-  }
-  if (user.hasProfileReadme) {
-    strongSignals.push('Custom profile README welcomes visitors with personality')
-  }
-  if (user.blog) {
-    strongSignals.push('Direct portfolio or external site linked')
-  }
-  if (stats?.languages && stats.languages.length >= 2) {
-    strongSignals.push(`Visible tech stack: ${stats.languages.slice(0, 3).join(', ')}`)
-  }
-  if (strongSignals.length === 0) {
-    strongSignals.push('Public GitHub profile accessible for evaluation')
-  }
-
-  const redFlags = []
-  if (undescribedCount > 0) {
-    redFlags.push(`${undescribedCount} of ${user.publicRepoCount || 0} repositories have no description`)
-  }
-  if (!user.bio || user.bio.trim().length === 0) {
-    redFlags.push('Missing bio: visitors cannot determine your primary specialization')
-  }
-  if (!user.hasProfileReadme) {
-    redFlags.push('No profile README: missed opportunity to feature flagship projects')
-  }
-  if (daysSinceLastPush !== null && daysSinceLastPush > 60) {
-    redFlags.push(`Push gap: no commits recorded in the past ${daysSinceLastPush} days`)
-  }
-  if (stats?.nonForkRepoCount === 0 && (user.publicRepoCount || 0) > 0) {
-    redFlags.push('All repositories are forks; no original work authored under this handle')
-  }
-  if (!user.blog) {
-    redFlags.push('No portfolio or external demo link in profile metadata')
-  }
-  if (redFlags.length === 0) {
-    redFlags.push('Minor documentation polish recommended for maximum recruiter appeal')
-  }
-
   const recruiterVerdict =
     safeScores.overall >= 70
       ? 'Passes the 30-second scan. Has tangible evidence of skill and projects worth exploring.'
@@ -241,6 +187,17 @@ export default function AnalysisDashboard({ data, activeTab, onTabChange }) {
     user,
     stats,
     repositories: data.repositories,
+  })
+
+  // 30-Second Recruiter Simulation data
+  const recruiterSim = getRecruiterSimulationData({
+    user,
+    stats,
+    repositories: data.repositories,
+    topRepositories: data.topRepositories,
+    findings,
+    roadblock,
+    topRescues,
   })
 
   // Categories for breakdown with real evidence linkage
@@ -530,8 +487,8 @@ function formatRepoDate(dateString) {
                 <span aria-hidden="true">🎯</span>
               </div>
               <div className="dash-tile__text">
-                <h4 className="dash-tile__heading">Recruiter Mode</h4>
-                <p className="dash-tile__desc">See the 30-second scan: strong signals, red flags &amp; verdict.</p>
+                <h4 className="dash-tile__heading">Recruiter Simulation</h4>
+                <p className="dash-tile__desc">See the 30-second scan: first impression, project scan &amp; decision.</p>
               </div>
               <span className="dash-tile__arrow">→</span>
             </button>
@@ -569,15 +526,15 @@ function formatRepoDate(dateString) {
         </div>
       )}
 
-      {/* ── VIEW 2: RECRUITER VIEW / MODE ── */}
+      {/* ── VIEW 2: RECRUITER VIEW / SIMULATION ── */}
       {activeTab === 'recruiter' && (
         <div className="dash-view dash-view--recruiter">
           <div className="dash-view-header">
             <div className="dash-view-header__left">
-              <span className="dash-view-tag">30-SECOND AUDIT</span>
-              <h2 className="dash-view-title">30-Second Recruiter Evaluation</h2>
+              <span className="dash-view-tag">30-SECOND SIMULATION</span>
+              <h2 className="dash-view-title">30-Second Recruiter Simulation</h2>
               <p className="dash-view-subtitle">
-                Factual evaluation synthesized purely from your public profile and repositories.
+                See what a recruiter can understand from your public GitHub profile in a quick scan.
               </p>
             </div>
             <button
@@ -590,50 +547,87 @@ function formatRepoDate(dateString) {
             </button>
           </div>
 
+          {/* Quick scan timeline steps */}
+          <div className="recruiter-sim-progress" aria-hidden="true">
+            <span className="recruiter-sim-step">01 First Impression · 0–5s</span>
+            <span className="recruiter-sim-arrow">→</span>
+            <span className="recruiter-sim-step">02 Project Scan · 5–15s</span>
+            <span className="recruiter-sim-arrow">→</span>
+            <span className="recruiter-sim-step">03 Decision · 15–30s</span>
+          </div>
+
           <div className={`recruiter-audit-grid ${isRecruiterModeActive ? 'recruiter-audit-grid--high-contrast' : ''}`}>
-            {/* 🟢 Strong Signals */}
+            {/* A. FIRST IMPRESSION (0–5s) */}
             <div className="recruiter-audit-card recruiter-audit-card--strong">
               <div className="recruiter-audit-card__header">
-                <span className="recruiter-signal-dot recruiter-signal-dot--green" aria-hidden="true">●</span>
-                <h3 className="recruiter-audit-card__title">Strong Signals</h3>
+                <span className="recruiter-stage-badge">01 · 0–5s</span>
+                <h3 className="recruiter-audit-card__title">First Impression</h3>
               </div>
               <ul className="recruiter-audit-list">
-                {strongSignals.map((item, idx) => (
-                  <li key={idx} className="recruiter-audit-item">
-                    <span className="recruiter-audit-icon" aria-hidden="true">✓</span>
-                    <span>{item}</span>
+                {recruiterSim.firstImpression.map((item, idx) => (
+                  <li key={idx} className={`recruiter-audit-item recruiter-audit-item--${item.type}`}>
+                    <span className="recruiter-audit-icon" aria-hidden="true">{item.icon}</span>
+                    <span>{item.text}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* 🔴 Red Flags */}
+            {/* B. PROJECT SCAN (5–15s) */}
             <div className="recruiter-audit-card recruiter-audit-card--weak">
               <div className="recruiter-audit-card__header">
-                <span className="recruiter-signal-dot recruiter-signal-dot--red" aria-hidden="true">●</span>
-                <h3 className="recruiter-audit-card__title">Red Flags</h3>
+                <span className="recruiter-stage-badge">02 · 5–15s</span>
+                <h3 className="recruiter-audit-card__title">Project Scan</h3>
               </div>
               <ul className="recruiter-audit-list">
-                {redFlags.map((item, idx) => (
-                  <li key={idx} className="recruiter-audit-item">
-                    <span className="recruiter-audit-icon" aria-hidden="true">⚠</span>
-                    <span>{item}</span>
+                {recruiterSim.projectScan.map((item, idx) => (
+                  <li key={idx} className={`recruiter-audit-item recruiter-audit-item--${item.type}`}>
+                    <span className="recruiter-audit-icon" aria-hidden="true">{item.icon}</span>
+                    <span>{item.text}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* 🎯 Recruiter Verdict */}
+            {/* C. RECRUITER DECISION (15–30s) */}
             <div className="recruiter-audit-card recruiter-audit-card--verdict">
               <div className="recruiter-audit-card__header">
-                <span className="recruiter-signal-dot" aria-hidden="true">🎯</span>
-                <h3 className="recruiter-audit-card__title">Recruiter Verdict</h3>
+                <span className="recruiter-stage-badge">03 · 15–30s</span>
+                <h3 className="recruiter-audit-card__title">Recruiter Decision</h3>
               </div>
               <p className="recruiter-verdict-summary">{recruiterVerdict}</p>
 
-              <div className="recruiter-first-action">
-                <span className="recruiter-first-action__label">Primary Roadblock to Fix</span>
-                <p className="recruiter-first-action__text">{roadblock.action}</p>
+              <div className="recruiter-decision-details">
+                <div className="recruiter-first-action">
+                  <span className="recruiter-first-action__label">Biggest Roadblock</span>
+                  <p className="recruiter-first-action__text">{roadblock.action || roadblock.diagnosis}</p>
+                </div>
+                <div className="recruiter-first-action recruiter-first-action--rescue">
+                  <span className="recruiter-first-action__label">Highest Priority Fix</span>
+                  <p className="recruiter-first-action__text">{topRescues[0] || roadblock.action}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* D. WHAT THE RECRUITER LEAVES WITH */}
+          <div className="recruiter-takeaways-card">
+            <div className="recruiter-takeaways-header">
+              <span className="recruiter-takeaways-icon" aria-hidden="true">💡</span>
+              <h3 className="recruiter-takeaways-title">What the Recruiter Leaves With</h3>
+            </div>
+            <div className="recruiter-takeaways-grid">
+              <div className="recruiter-takeaway-item">
+                <span className="recruiter-takeaway-label">Strongest Signal</span>
+                <p className="recruiter-takeaway-val">{recruiterSim.takeaways.strongestSignal}</p>
+              </div>
+              <div className="recruiter-takeaway-item">
+                <span className="recruiter-takeaway-label">Biggest Concern</span>
+                <p className="recruiter-takeaway-val">{recruiterSim.takeaways.biggestConcern}</p>
+              </div>
+              <div className="recruiter-takeaway-item">
+                <span className="recruiter-takeaway-label">First Thing to Fix</span>
+                <p className="recruiter-takeaway-val">{recruiterSim.takeaways.firstThingToFix}</p>
               </div>
             </div>
           </div>
